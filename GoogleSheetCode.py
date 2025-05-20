@@ -7,7 +7,7 @@ from auth import drive_service
 def create():
     spreadsheet_details = {
                             'properties':{
-                                            'title': 'TomTestGoogleSheet'
+                                            'title': 'FinancePlan_2023'
                                          }
                           }
 
@@ -26,4 +26,7 @@ def create():
 
     return sheetId
 
-#create()
+if __name__=="__main__":
+    #create()
+    
+    #12eMkwLzDT4334OQHo94FWl7HUF6Za_Ux0-ZxeY-Z92E

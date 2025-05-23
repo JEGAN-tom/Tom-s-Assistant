@@ -32,6 +32,22 @@ Hw_Db_TableDetails = {
                 "Key": "",
                 "Default": "None",
                 "Extra": ""
+            },
+            "TaskType": {
+                "Field": "TaskType",
+                "Type": "varchar(50)",
+                "Null": "NO",
+                "Key": "",
+                "Default": "Daily",
+                "Extra": ""
+            },
+            "TaskParams": {
+                "Field": "TaskParams",
+                "Type": "varchar(255)",
+                "Null": "YES",
+                "Key": "",
+                "Default": "NULL",
+                "Extra": ""
             }
         },
         "TaskSchedules": {
@@ -47,10 +63,17 @@ Hw_Db_TableDetails = {
                 "Field": "TaskId",
                 "Type": "int",
                 "Null": "NO",
-                "Key": "FK",
+                "Key": "",
+                "Default": "0",
+                "Extra": ""
+            },
+            "Name": {
+                "Field": "Name",
+                "Type": "varchar(255)",
+                "Null": "NO",
+                "Key": "",
                 "Default": "None",
-                "Extra": "",
-                "References": "Tasks(TaskId)"
+                "Extra": ""
             },
             "Date": {
                 "Field": "Date",
@@ -95,6 +118,22 @@ Hw_Db_TableDetails = {
                 "Key": "",
                 "Default": "None",
                 "Extra": ""
+            },
+            "TaskType": {
+                "Field": "TaskType",
+                "Type": "varchar(50)",
+                "Null": "NO",
+                "Key": "",
+                "Default": "Daily",
+                "Extra": ""
+            },
+            "TaskParams": {
+                "Field": "TaskParams",
+                "Type": "varchar(255)",
+                "Null": "YES",
+                "Key": "",
+                "Default": "NULL",
+                "Extra": ""
             }
         },
         "TaskSchedules": {
@@ -110,10 +149,17 @@ Hw_Db_TableDetails = {
                 "Field": "TaskId",
                 "Type": "int(11)",
                 "Null": "NO",
-                "Key": "FK",
+                "Key": "",
+                "Default": "0",
+                "Extra": ""
+            },
+            "Name": {
+                "Field": "Name",
+                "Type": "varchar(255)",
+                "Null": "NO",
+                "Key": "",
                 "Default": "None",
-                "Extra": "",
-                "References": "Tasks(TaskId)"
+                "Extra": ""
             },
             "Date": {
                 "Field": "Date",
@@ -154,10 +200,8 @@ def CreateDatabase(DatabaseName):
     Db.close()
 
 def CreateTable(TableName, TableDetails, Database):
-    # First, create the table without constraints
     Query = "CREATE TABLE IF NOT EXISTS `" + TableName + "` ("
     primary_key_field = None
-    foreign_keys = []
     
     for FieldDetails in TableDetails.values():
         if FieldDetails['Null'] == 'YES':
@@ -165,23 +209,18 @@ def CreateTable(TableName, TableDetails, Database):
         elif FieldDetails['Default'] != 'None':
             Default = FieldDetails['Default']
             if 'varchar' in FieldDetails['Type']:
-                Default = "'" + str(FieldDetails['Default']) + "'"
-            DefaultString = "NOT NULL DEFAULT " + str(Default)
+                DefaultString = f"NOT NULL DEFAULT '{Default}'"
+            else:
+                DefaultString = f"NOT NULL DEFAULT {Default}"
         else:
             DefaultString = "NOT NULL"
         
         ExtraString = FieldDetails['Extra'] if FieldDetails['Extra'] else ''
         if FieldDetails['Key'] == 'PRI':
             primary_key_field = FieldDetails['Field']
-        elif FieldDetails['Key'] == 'FK' and 'References' in FieldDetails:
-            foreign_keys.append({
-                'Field': FieldDetails['Field'],
-                'References': FieldDetails['References']
-            })
         
         Query += f"{FieldDetails['Field']} {FieldDetails['Type']} {DefaultString} {ExtraString}, "
     
-    # Add primary key constraint
     if primary_key_field:
         Query += f"PRIMARY KEY ({primary_key_field})"
     Query = Query.rstrip(", ") + ")"
@@ -189,15 +228,6 @@ def CreateTable(TableName, TableDetails, Database):
     Db = MySQLdb.connect(host=Host, user=Username, password=Password, database=Database)
     Cursor = Db.cursor()
     Cursor.execute(Query)
-    
-    # Add foreign key constraints separately
-    for fk in foreign_keys:
-        fk_query = f"ALTER TABLE `{TableName}` ADD CONSTRAINT `fk_{TableName}_{fk['Field']}` FOREIGN KEY ({fk['Field']}) REFERENCES {fk['References']}"
-        try:
-            Cursor.execute(fk_query)
-        except Exception as e:
-            print(f"Warning: Could not add foreign key constraint for {TableName}.{fk['Field']}: {e}")
-    
     Cursor.close()
     Db.close()
 
@@ -265,16 +295,12 @@ def Hw_Db_TableInitialization():
         existing_structure = CheckTableStructure(table_name)
         
         if existing_structure is None:
-            # Table doesn't exist, create it
             CreateTable(table_name, TableDetails, PersonalAssistantTom)
         else:
-            # Table exists, check if structure needs updates
             expected_columns = set(TableDetails.keys())
             existing_columns = set(existing_structure.keys())
             
             if expected_columns != existing_columns:
-                # For simplicity, drop and recreate the table
-                # In a production environment, you might want to ALTER the table instead
                 Db = MySQLdb.connect(host=Host, user=Username, password=Password, database=PersonalAssistantTom)
                 Cursor = Db.cursor()
                 Cursor.execute(f"DROP TABLE {table_name}")
@@ -283,6 +309,5 @@ def Hw_Db_TableInitialization():
                 CreateTable(table_name, TableDetails, PersonalAssistantTom)
 
 if __name__ == '__main__':
-    # Initialize Database
     CreateDatabase(PersonalAssistantTom)
     Hw_Db_TableInitialization()
